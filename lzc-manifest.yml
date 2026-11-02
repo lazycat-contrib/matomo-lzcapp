@@ -1,0 +1,66 @@
+application:
+  subdomain: matomo
+  multi_instance: false
+  upstreams:
+    - location: /package-licenses/
+      backend: file:///lzcapp/pkg/content/licenses/
+    - location: /
+      backend: http://matomo:80/
+
+services:
+  db:
+    image: docker.1ms.run/library/mariadb:10.11
+    environment:
+      - MARIADB_ROOT_PASSWORD={{ stable_secret "matomo_db_root" | replace "\r" "" | replace "\n" "" }}
+      - MARIADB_DATABASE=matomo
+      - MARIADB_USER=matomo
+      - |-
+        MARIADB_PASSWORD={{ stable_secret "matomo_db_password" | replace "\r" "" | replace "\n" "" }}
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - mariadb-admin ping -h 127.0.0.1 -u root -p"$$MARIADB_ROOT_PASSWORD"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    binds:
+      - /lzcapp/var/db:/var/lib/mysql
+
+  matomo:
+    # upstream: library/matomo:5.14.2
+    image: docker.1ms.run/library/matomo:5.14.2
+    depends_on:
+      - db
+    environment:
+      - MATOMO_DATABASE_HOST=db
+      - MATOMO_DATABASE_ADAPTER=mysql
+      - MATOMO_DATABASE_TABLES_PREFIX=matomo_
+      - MATOMO_DATABASE_USERNAME=matomo
+      - |-
+        MATOMO_DATABASE_PASSWORD={{ stable_secret "matomo_db_password" | replace "\r" "" | replace "\n" "" }}
+      - MATOMO_DATABASE_DBNAME=matomo
+      - |-
+        MATOMO_GENERAL_TRUSTED_HOSTS={{ .S.AppDomain }}
+      - TZ=Asia/Shanghai
+    binds:
+      - /lzcapp/var/html:/var/www/html
+
+usage: |
+  Matomo 是自建的网站统计工具：记录访问量、来源和页面行为，支持目标转化和漏斗分析。
+
+  使用方法：
+  1. 打开应用，会进入安装向导，按提示建表并设置超级管理员账号。
+  2. 安装完成后，在"管理 → 网站 → 添加"里录入要统计的站点。
+  3. 把给出的 JS 跟踪代码贴到目标网站页面里，即可开始收集数据。
+
+  数据与安全：
+  - 数据库在 MariaDB（/lzcapp/var/db），程序与配置在 /lzcapp/var/html。卸载应用会一并删除，请定期备份。
+  - 数据库密码由平台稳定密钥生成，每个部署不同，不写成固定值。
+  - 本包不预置任何账号或默认口令；管理员账号由安装向导创建。
+  - 应用经懒猫入口鉴权访问。
+
+  说明：
+  - 本应用包含两个容器（应用本体 + MariaDB），启动顺序由依赖关系保证。
+  - 未配置邮件服务，报表邮件、找回密码等依赖邮件的功能不可用。
+  - 未做真机验证：安装向导、登录、添加站点、跟踪代码上报以及重启后持久化均未在设备上实测。

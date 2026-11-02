@@ -1,0 +1,18 @@
+package: community.lazycat.app.matomo
+name: Matomo
+version: 0.0.0
+description: "Privacy-focused web analytics you host yourself, with goals, funnels and visitor reports."
+min_os_version: "1.5.0"
+homepage: https://github.com/matomo-org/matomo
+author: Matomo
+license: GPL-3.0
+permissions:
+  required:
+    - net.internet
+locales:
+  zh:
+    name: Matomo
+    description: "自建网站统计：记录访问量、来源和页面行为，支持目标转化和漏斗分析，数据完全自己掌握。"
+  en:
+    name: Matomo
+    description: "Privacy-focused web analytics you host yourself, with goals, funnels and visitor reports."
