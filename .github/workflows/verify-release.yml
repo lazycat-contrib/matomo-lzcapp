@@ -71,7 +71,7 @@ jobs:
               assert set(svcs) == {'matomo', 'db'}, set(svcs)
 
               appsvc = svcs['matomo']
-              assert 'matomo:5' in appsvc['image'] or 'matomo:' in appsvc['image'], appsvc['image']
+              assert 'matomo:' in appsvc['image'], appsvc['image']
               assert appsvc['image'].endswith(':' + tag.lstrip('v')), appsvc['image']
 
               env = ' '.join(appsvc['environment'])
@@ -97,7 +97,9 @@ jobs:
                   cmembers = content.getnames()
                   lic = [n for n in cmembers if 'licenses/' in n]
                   assert lic, cmembers
-                  license_text = content.extractfile(lic[0]).read().decode()
+                  main_lic = [n for n in lic if n.endswith('/LICENSE')]
+                  target = main_lic[0] if main_lic else lic[0]
+                  license_text = content.extractfile(target).read().decode()
               assert 'GNU GENERAL PUBLIC LICENSE' in license_text
 
           result = {
